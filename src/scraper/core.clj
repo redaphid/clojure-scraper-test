@@ -4,6 +4,7 @@
     (:require [clj-http.client :as client])
     (:require [cemerick.url :refer (url url)])
     (:require [clojure.string :as string])
+    (:require [clj-time.core :as time])
 )
 
 (defn download-images [site-url]
@@ -17,20 +18,20 @@
   ))
 
    (def relative-links
-     (map :src (map :attrs (html/select site-html [:center :a :img])))
+     (map :href (map :attrs (html/select site-html [(html/attr-starts :href "attachment.php")])))
    )
    (map (partial get-full-url site-url) relative-links)
 )
 
 (defn get-full-url [site-url relative-url]
-  (str (url site-url relative-url))
+  (str (assoc (url site-url) :path (str "/" relative-url)))
 )
 
 (defn download-image [folder image-url]
-  (def image-file (io/file "downloads" folder (last (string/split image-url #"/"))))
+  (def image-file (io/file "downloads" folder (str (time/now) ".jpg")))
   (io/make-parents image-file)
   (io/copy
-    (:body (client/get (str image-url) {:as :stream}))
+    (:body (client/get (str image-url) {:as :stream, :cookies cookie}))
     (io/file image-file)
   )
 )
