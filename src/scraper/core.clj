@@ -5,6 +5,7 @@
     (:require [cemerick.url :refer (url url)])
     (:require [clojure.string :as string])
     (:require [clj-time.core :as time])
+    (:require [clj-time.coerce :as time-coerce])
 )
 
 (defn download-images [site-url]
@@ -42,7 +43,7 @@
 )
 
 (defn download-image [folder image-url]
-  (def image-file (io/file "downloads" folder (str (time/now) ".jpg")))
+  (def image-file (io/file "downloads" folder (str (time-coerce/to-long (time/now)) ".jpg")))
   (io/make-parents image-file)
   (io/copy
     (:body (client/get (str image-url) {:as :stream, :cookies cookie}))
