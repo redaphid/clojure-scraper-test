@@ -34,3 +34,22 @@
     (io/file image-file)
   )
 )
+
+
+(defn parse-cookie [raw-cookie]
+  (into {}
+    (map
+      (fn [cookie-kv]
+        (def cookie-pair (clojure.string/split cookie-kv #"="))
+        [
+          (first cookie-pair)
+          {:discard false, :path "/", :value (second cookie-pair), :version 1}
+        ]
+      )
+      (clojure.string/split raw-cookie #"; ")
+    )
+  )
+)
+
+; (def cookie (parse-cookie raw-cookie))
+; (def image (client/get image-url {:cookies cookie, :as :stream}))
