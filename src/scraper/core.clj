@@ -8,8 +8,19 @@
 )
 
 (defn download-images [site-url]
-  (def folder (last (string/split site-url #"/")))
-  (map (partial download-image folder) (get-image-links site-url))
+  (println (str "downloading from " site-url))
+  (doall (map (partial download-image "test") (get-image-links site-url)))
+  (keep-downloading site-url)
+)
+
+(defn keep-downloading [site-url]
+  (def site-html (html/html-resource
+    (java.io.StringReader. ((client/get site-url) :body))
+  ))
+  (def relative-next-url (:href (:attrs (first (html/select site-html [(html/attr= :rel "next")])))))
+  (if relative-next-url
+    (download-images (get-full-url site-url relative-next-url))
+  )
 )
 
 (defn get-image-links [site-url]
@@ -24,7 +35,10 @@
 )
 
 (defn get-full-url [site-url relative-url]
-  (str (assoc (url site-url) :path (str "/" relative-url)))
+  (def parsed-site-url (url site-url))
+  (def root-url (str (:protocol parsed-site-url) "://" (:host parsed-site-url)))
+  (def image-url (str root-url "/" relative-url))
+  image-url
 )
 
 (defn download-image [folder image-url]
