@@ -27,10 +27,10 @@
 )
 
 (defn download-image [folder image-url]
-  (def file (str "downloads/" folder "/" (last (string/split image-url #"/"))))
-  (io/make-parents file)
+  (def image-file (io/file "downloads" folder (last (string/split image-url #"/"))))
+  (io/make-parents image-file)
   (io/copy
     (:body (client/get (str image-url) {:as :stream}))
-    (io/file file)
+    (io/file image-file)
   )
 )
