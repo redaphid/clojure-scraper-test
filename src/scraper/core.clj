@@ -1,29 +1,36 @@
 (ns scraper.core
     (:require [net.cgrand.enlive-html :as html])
+    (:require [clojure.java.io :as io])
     (:require [clj-http.client :as client])
     (:require [cemerick.url :refer (url url)])
     (:require [clojure.string :as string])
 )
 
+(defn download-images [site-url]
+  (def folder (last (string/split site-url #"/")))
+  (map (partial download-image folder) (get-image-links site-url))
+)
 
-(def site-html (html/html-resource
-  (java.io.StringReader. ((client/get site-url) :body))
-))
+(defn get-image-links [site-url]
+  (def site-html (html/html-resource
+    (java.io.StringReader. ((client/get site-url) :body))
+  ))
 
-(defn get-image-links []
    (def relative-links
      (map :src (map :attrs (html/select site-html [:center :a :img])))
    )
-   (map get-full-url relative-links)
+   (map (partial get-full-url site-url) relative-links)
 )
 
-(defn get-full-url [relative-url]
+(defn get-full-url [site-url relative-url]
   (str (url site-url relative-url))
 )
 
-(defn download-image [image-url]
-  (clojure.java.io/copy
+(defn download-image [folder image-url]
+  (def file (str "downloads/" folder "/" (last (string/split image-url #"/"))))
+  (io/make-parents file)
+  (io/copy
     (:body (client/get (str image-url) {:as :stream}))
-    (java.io.File. (str "downloads/" (last (string/split image-url #"/"))))
+    (io/file file)
   )
 )
